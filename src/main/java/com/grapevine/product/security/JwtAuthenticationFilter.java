@@ -1,8 +1,5 @@
 package com.grapevine.product.security;
 
-import com.grapevine.product.user.User;
-import com.grapevine.product.user.UserRepository;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +19,6 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(
@@ -34,36 +30,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-
             filterChain.doFilter(request, response);
             return;
         }
 
         String token = authHeader.substring(7);
 
-        String email = jwtService.extractEmail(token);
+        try {
+            String email = jwtService.extractEmail(token);
+            String role = jwtService.extractRole(token);
 
-        User user = userRepository.findByEmail(email)
-                .orElse(null);
+            if (email != null && role != null && !jwtService.isTokenExpired(token)) {
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                email,
+                                null,
+                                List.of(new SimpleGrantedAuthority("ROLE_" + role))
+                        );
 
-        if (user != null) {
-
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            user,
-                            null,
-                            List.of(
-                                    new SimpleGrantedAuthority(
-                                            "ROLE_" + user.getRole().name()
-                                    )
-                            )
-                    );
-
-            SecurityContextHolder.getContext()
-                    .setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+        } catch (Exception ignored) {
+            // Token inválido/expirado: se deja sin autenticar, Spring Security responderá 401/403.
         }
 
         filterChain.doFilter(request, response);
     }
-
 }

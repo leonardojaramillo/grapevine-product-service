@@ -43,7 +43,7 @@ public class InventoryService {
                 .orElseThrow(() -> new RuntimeException("Almacén no encontrado"));
         return adjustmentRepository.findAll().stream()
                 .filter(a -> a.getWarehouse() != null
-                          && a.getWarehouse().getId().equals(warehouse.getId()))
+                        && a.getWarehouse().getId().equals(warehouse.getId()))
                 .map(a -> InventoryAdjustmentResponse.builder()
                         .id(a.getId())
                         .productName(a.getProduct().getName())

@@ -7,7 +7,7 @@ import lombok.*;
 
 @Entity
 @Table(name = "warehouse_stock",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"warehouse_id", "product_id"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"warehouse_id", "product_id"}))
 @Getter
 @Setter
 @Builder
